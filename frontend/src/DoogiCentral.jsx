@@ -21,7 +21,9 @@ import nexusLogo from "./assets/NexusSyncLogo.png";
 
 const WS_URL =
   import.meta.env.VITE_DOOGI_WS_URL ||
-  `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}/doogi-ws`;
+  (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+    ? "ws://127.0.0.1:8787/doogi-ws"
+    : "wss://doogicentralserver.onrender.com/doogi-ws");
 
 const tutorialSlides = [
   {
