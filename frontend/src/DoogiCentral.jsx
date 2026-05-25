@@ -79,10 +79,10 @@ function cardKey(card) {
 }
 
 const suitIcons = {
-  S: "♠",
-  H: "♥",
-  D: "♦",
-  C: "♣",
+  S: "\u2660",
+  H: "\u2665",
+  D: "\u2666",
+  C: "\u2663",
 };
 
 function suitIcon(card) {
@@ -141,16 +141,31 @@ function useDoogiSocket() {
   return { connected, clientId, snapshot, error, setError, analysis, events, send };
 }
 
-const Card = memo(function Card({ card, selected, playable, onClick, onDragEnd, small = false, draggable = false }) {
+function CardBack({ small = false, offset = 0 }) {
+  return (
+    <div
+      className={[
+        "card-back pointer-events-none relative shrink-0 rounded-xl border border-white/80 shadow-lg",
+        small ? "h-16 w-11" : "h-28 w-20 sm:h-32 sm:w-24",
+      ].join(" ")}
+      style={{ transform: `translate(${offset}px, ${offset * -0.5}px)` }}
+      aria-hidden="true"
+    />
+  );
+}
+
+const Card = memo(function Card({ card, selected, playable, onClick, onDragEnd, small = false, draggable = false, index = 0 }) {
   const label = cardLabel(card);
   const suit = suitIcon(card);
   const red = isRedCard(card);
-  const displaySuit = suit || (label === "WIN" ? "★" : "♠");
+  const displaySuit = suit || (label === "WIN" ? "\u2605" : "\u2660");
   return (
     <motion.button
       type="button"
+      initial={{ opacity: 0, y: 18, rotate: index % 2 ? 1.5 : -1.5 }}
+      animate={{ opacity: 1, y: selected ? -18 : 0, rotate: selected ? 0 : index % 2 ? 1 : -1 }}
+      transition={{ delay: Math.min(index * 0.025, 0.25), type: "spring", stiffness: 420, damping: 30 }}
       whileTap={{ scale: 0.95 }}
-      animate={{ y: selected ? -16 : 0 }}
       drag={draggable ? true : false}
       dragSnapToOrigin
       dragElastic={0.18}
@@ -158,7 +173,7 @@ const Card = memo(function Card({ card, selected, playable, onClick, onDragEnd, 
       onDragEnd={onDragEnd}
       onClick={onClick}
       className={[
-        "relative shrink-0 overflow-hidden rounded-xl border font-black shadow-lg transition touch-none",
+        "playing-card relative shrink-0 overflow-hidden rounded-xl border font-black shadow-lg transition touch-none",
         small ? "h-16 w-11 text-base" : "h-28 w-20 text-2xl sm:h-32 sm:w-24",
         selected ? "border-cyan-200 bg-cyan-50 text-slate-950 shadow-cyan-400/30" : "border-slate-200 bg-white text-slate-950",
         playable ? "ring-2 ring-cyan-300/70" : "opacity-90",
@@ -198,8 +213,8 @@ function Tutorial({ onClose }) {
         <AnimatePresence mode="wait">
           <motion.div key={slide.title} initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} className="mt-6">
             <div className="flex min-h-28 items-center justify-center gap-3 rounded-2xl bg-black/30 p-4">
-              {slide.cards.map((card) => (
-                <Card key={card} card={card} small />
+              {slide.cards.map((card, index) => (
+                <Card key={card} card={card} small index={index} />
               ))}
             </div>
             <p className="mt-5 text-lg leading-8 text-gray-200">{slide.body}</p>
@@ -266,7 +281,7 @@ function Landing({ connected, onMode }) {
           <div className="mt-10 grid grid-cols-3 gap-3">
             {["7", "7", "Q", "Q", "Q", "2"].map((card, index) => (
               <motion.div key={`${card}-${index}`} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.08 }}>
-                <Card card={card} small />
+                <Card card={card} small index={index} />
               </motion.div>
             ))}
           </div>
@@ -445,7 +460,13 @@ function Game({ snapshot, send, analysis, onTutorial }) {
             {snapshot.players.map((player) => (
               <div key={player.id} className={`rounded-2xl border p-3 ${player.id === snapshot.currentPlayerId ? "border-cyan-300 bg-cyan-400/10" : "border-white/10 bg-black/20"}`}>
                 <p className="truncate font-bold text-white">{player.name}</p>
-                <p className="text-sm text-gray-400">{player.cardCount} cards</p>
+                <div className="mt-2 flex items-center justify-between gap-2">
+                  <p className="text-sm text-gray-400">{player.cardCount} cards</p>
+                  <div className="relative h-8 w-10 overflow-hidden">
+                    <span className="absolute right-2 top-0"><CardBack small offset={0} /></span>
+                    <span className="absolute right-0 top-1"><CardBack small offset={2} /></span>
+                  </div>
+                </div>
                 {player.rank && <p className="mt-1 text-xs text-yellow-200">Rank #{player.rank}</p>}
               </div>
             ))}
@@ -456,13 +477,20 @@ function Game({ snapshot, send, analysis, onTutorial }) {
           ref={tableRef}
           onDragEnter={() => setDropReady(true)}
           onDragLeave={() => setDropReady(false)}
-          className={`min-h-60 rounded-3xl border bg-gradient-to-br from-emerald-950/70 via-slate-950 to-cyan-950/60 p-5 transition ${
+          className={`game-felt min-h-60 rounded-3xl border p-5 transition ${
             dropReady ? "border-cyan-200 shadow-2xl shadow-cyan-500/20" : "border-white/10"
           }`}
         >
-          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-cyan-200">Table</p>
+          <div className="flex items-center justify-between gap-4">
+            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-cyan-200">Table</p>
+            <div className="relative h-12 w-16 overflow-hidden">
+              <span className="absolute right-4 top-0"><CardBack small offset={0} /></span>
+              <span className="absolute right-2 top-1"><CardBack small offset={2} /></span>
+              <span className="absolute right-0 top-2"><CardBack small offset={4} /></span>
+            </div>
+          </div>
           <div className="mt-6 flex min-h-28 flex-wrap items-center justify-center gap-3">
-            {(snapshot.table?.cards || []).length ? snapshot.table.cards.map((card) => <Card key={cardKey(card)} card={card} small />) : <p className="text-gray-300">Table is clear. Start any valid move.</p>}
+            {(snapshot.table?.cards || []).length ? snapshot.table.cards.map((card, index) => <Card key={cardKey(card)} card={card} small index={index} />) : <p className="text-gray-300">Table is clear. Start any valid move.</p>}
           </div>
           <p className="mt-5 text-center text-sm text-gray-300">{snapshot.table?.combo ? `${snapshot.table.combo} | rank ${snapshot.table.rank}` : "Fresh round"}</p>
           {myTurn && <p className="mt-2 text-center text-xs font-semibold text-cyan-100">Drag selected cards here or tap Play.</p>}
@@ -477,10 +505,11 @@ function Game({ snapshot, send, analysis, onTutorial }) {
             </div>
           </div>
           <div className="mt-5 flex gap-2 overflow-x-auto pb-5 pt-3">
-            {hand.map((card) => (
+            {hand.map((card, index) => (
               <Card
                 key={cardKey(card)}
                 card={card}
+                index={index}
                 selected={selected.includes(cardKey(card))}
                 playable={playable.has(cardKey(card))}
                 draggable={myTurn && playable.has(cardKey(card))}
