@@ -18,6 +18,7 @@ import {
   X,
 } from "lucide-react";
 import nexusLogo from "./assets/NexusSyncLogo.png";
+import uditaImage from "./assets/Udita.webp";
 
 const WS_URL =
   import.meta.env.VITE_DOOGI_WS_URL ||
@@ -249,19 +250,31 @@ function Tutorial({ onClose }) {
 
 function Landing({ connected, onMode }) {
   return (
-    <section className="mx-auto grid max-w-7xl gap-8 px-4 pb-14 pt-8 lg:grid-cols-[1.1fr_.9fr] lg:items-center">
+    <section className="mx-auto grid max-w-7xl gap-8 px-4 pb-14 pt-8 lg:grid-cols-[1.02fr_.98fr] lg:items-center">
       <div>
         <div className="inline-flex items-center gap-3 rounded-full border border-cyan-300/20 bg-white/5 px-4 py-2 text-sm font-semibold text-cyan-100">
           <Shield size={16} /> Server-authoritative realtime card play
         </div>
         <h1 className="mt-6 text-5xl font-black leading-tight text-white sm:text-7xl">
-          Doogi <span className="text-cyan-300">Central</span>
+          Doogi <span className="text-amber-200">Central</span>
         </h1>
+        <p className="mt-3 text-xl font-semibold text-amber-100">Meet Udita, your game guide.</p>
         <p className="mt-5 max-w-2xl text-lg leading-8 text-gray-300">
-          Create private rooms, play singles, pairs, and triplets in realtime, chat live, and get a fun post-match AI strategy breakdown.
+          Create private rooms, play singles, pairs, and triplets in realtime, chat live, and let Udita guide the table from first deal to final strategy breakdown.
         </p>
+        <div className="mt-6 grid max-w-2xl gap-3 sm:grid-cols-3">
+          {[
+            ["\u2660", "Your game guide"],
+            ["\u2665", "Always by your side"],
+            ["\u2666", "Smart moves, smooth play"],
+          ].map(([icon, text]) => (
+            <div key={text} className="rounded-2xl border border-amber-200/20 bg-amber-200/10 px-4 py-3 text-sm font-bold text-amber-50">
+              <span className="mr-2 text-amber-200">{icon}</span>{text}
+            </div>
+          ))}
+        </div>
         <div className="mt-8 flex flex-wrap gap-3">
-          <button type="button" onClick={() => onMode("create")} className="inline-flex items-center gap-2 rounded-full bg-cyan-400 px-6 py-4 font-black text-slate-950 shadow-lg shadow-cyan-950/30">
+          <button type="button" onClick={() => onMode("create")} className="inline-flex items-center gap-2 rounded-full bg-amber-300 px-6 py-4 font-black text-slate-950 shadow-lg shadow-amber-950/30">
             <Play size={18} /> Create Room
           </button>
           <button type="button" onClick={() => onMode("join")} className="inline-flex items-center gap-2 rounded-full border border-white/15 px-6 py-4 font-black text-white">
@@ -272,22 +285,33 @@ function Landing({ connected, onMode }) {
           {connected ? "Realtime server connected." : "Realtime server not connected. Start the Doogi WebSocket server for online rooms."}
         </p>
       </div>
-      <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-5 shadow-2xl shadow-cyan-950/20">
-        <div className="rounded-[1.5rem] bg-gradient-to-br from-emerald-400/20 via-cyan-400/10 to-blue-500/20 p-5">
-          <div className="flex items-center justify-between">
-            <img src={nexusLogo} alt="NexusSync Solutions" className="h-14 rounded-xl bg-white p-2" />
-            <Gamepad2 className="text-cyan-200" />
+      <div className="udita-panel rounded-[2rem] border border-amber-200/30 bg-white/[0.04] p-4 shadow-2xl shadow-amber-950/20">
+        <div className="grid gap-4 lg:grid-cols-[1fr_.72fr]">
+          <div className="relative min-h-[420px] overflow-hidden rounded-[1.5rem] border border-amber-200/20 bg-black">
+            <img src={uditaImage} alt="Udita, Doogi Central game guide" className="absolute inset-0 h-full w-full object-cover object-left-top" loading="eager" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 p-5">
+              <p className="text-xs font-bold uppercase tracking-[0.28em] text-amber-200">Meet</p>
+              <h2 className="text-4xl font-black text-amber-100">Udita</h2>
+              <p className="mt-1 text-sm font-semibold text-amber-50">Your game guide</p>
+            </div>
           </div>
-          <div className="mt-10 grid grid-cols-3 gap-3">
-            {["7", "7", "Q", "Q", "Q", "2"].map((card, index) => (
-              <motion.div key={`${card}-${index}`} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.08 }}>
-                <Card card={card} small index={index} />
-              </motion.div>
-            ))}
-          </div>
-          <div className="mt-8 rounded-2xl border border-cyan-300/20 bg-black/30 p-4">
-            <h2 className="font-bold text-white">MVP rules</h2>
-            <p className="mt-2 text-sm leading-6 text-gray-300">Singles, pairs, triplets. Equal or higher rank allowed. Last unbeaten player wins control.</p>
+          <div className="rounded-[1.5rem] bg-gradient-to-br from-amber-300/16 via-emerald-400/10 to-cyan-500/10 p-5">
+            <div className="flex items-center justify-between">
+              <img src={nexusLogo} alt="NexusSync Solutions" className="h-14 rounded-xl bg-white p-2" />
+              <Gamepad2 className="text-amber-200" />
+            </div>
+            <div className="mt-8 grid grid-cols-3 gap-3">
+              {["A", "2", "2", "K", "K", "K"].map((card, index) => (
+                <motion.div key={`${card}-${index}`} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.08 }}>
+                  <Card card={card} small index={index} />
+                </motion.div>
+              ))}
+            </div>
+            <div className="mt-8 rounded-2xl border border-amber-300/20 bg-black/35 p-4">
+              <h2 className="font-bold text-white">Let the game begin</h2>
+              <p className="mt-2 text-sm leading-6 text-gray-300">Your game, your rules, your moment. Play clean sets, win control, and finish first.</p>
+            </div>
           </div>
         </div>
       </div>

@@ -58,3 +58,10 @@ body {
   border: 2px solid rgba(255, 255, 255, 0.72);
   border-radius: 0.45rem;
 }
+
+.udita-panel {
+  background:
+    radial-gradient(circle at 24% 18%, rgba(251, 191, 36, 0.16), transparent 30%),
+    radial-gradient(circle at 80% 20%, rgba(20, 184, 166, 0.12), transparent 28%),
+    rgba(255, 255, 255, 0.04);
+}
