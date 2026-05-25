@@ -155,7 +155,7 @@ function CardBack({ small = false, offset = 0 }) {
   );
 }
 
-const Card = memo(function Card({ card, selected, playable, onClick, onDragEnd, small = false, variant = "hand", draggable = false, index = 0 }) {
+const Card = memo(function Card({ card, selected, playable, onClick, onDragStart, onDragEnd, small = false, variant = "hand", draggable = false, index = 0 }) {
   const label = cardLabel(card);
   const suit = suitIcon(card);
   const red = isRedCard(card);
@@ -170,12 +170,13 @@ const Card = memo(function Card({ card, selected, playable, onClick, onDragEnd, 
       type="button"
       initial={{ opacity: 0, y: 18, rotate: index % 2 ? 1.5 : -1.5 }}
       animate={{ opacity: 1, y: selected ? -18 : 0, rotate: selected ? 0 : index % 2 ? 1 : -1 }}
-      transition={{ delay: Math.min(index * 0.025, 0.25), type: "spring", stiffness: 420, damping: 30 }}
+      transition={{ delay: small ? Math.min(index * 0.025, 0.2) : 0, type: "spring", stiffness: 520, damping: 36 }}
       whileTap={{ scale: 0.95 }}
       drag={draggable ? true : false}
       dragSnapToOrigin
       dragElastic={0.18}
       dragMomentum={false}
+      onDragStart={onDragStart}
       onDragEnd={onDragEnd}
       onClick={onClick}
       className={[
@@ -253,6 +254,54 @@ function DealAnimation({ players = [], onDone }) {
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 rounded-full border border-amber-200/30 bg-black/70 px-5 py-3 text-sm font-black text-amber-100">
         Udita is dealing the cards...
       </div>
+    </div>
+  );
+}
+
+function FirstPlaceCelebration({ playerName, onDone }) {
+  useEffect(() => {
+    const timer = setTimeout(onDone, 4200);
+    return () => clearTimeout(timer);
+  }, [onDone]);
+
+  const floaters = Array.from({ length: 34 }, (_, index) => ({
+    id: index,
+    icon: index % 3 === 0 ? "\uD83D\uDC8B" : index % 3 === 1 ? "\u2665" : "\uD83D\uDC96",
+    left: 8 + ((index * 23) % 84),
+    delay: (index % 10) * 0.12,
+    drift: -30 + ((index * 17) % 60),
+  }));
+
+  return (
+    <div className="pointer-events-none fixed inset-0 z-[70] overflow-hidden">
+      <div className="absolute inset-0 bg-black/20" />
+      <motion.div
+        initial={{ opacity: 0, y: 40, scale: 0.9 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 24, scale: 0.95 }}
+        className="absolute bottom-6 left-1/2 w-[min(92vw,520px)] -translate-x-1/2 overflow-hidden rounded-[2rem] border border-amber-200/40 bg-black/85 p-4 shadow-2xl shadow-amber-950/40 backdrop-blur"
+      >
+        <div className="flex items-center gap-4">
+          <img src={uditaImage} alt="Udita celebrating" className="h-28 w-20 rounded-2xl object-cover object-left-top" />
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.26em] text-amber-200">Rank #1</p>
+            <h2 className="mt-1 text-2xl font-black text-white">{playerName || "Winner"} wins first!</h2>
+            <p className="mt-2 text-sm font-semibold text-amber-50">Udita sends kisses, hearts, and a champion salute.</p>
+          </div>
+        </div>
+      </motion.div>
+      {floaters.map((item) => (
+        <motion.div
+          key={item.id}
+          className="absolute bottom-16 text-3xl"
+          style={{ left: `${item.left}%` }}
+          initial={{ opacity: 0, y: 0, x: 0, scale: 0.6, rotate: -12 }}
+          animate={{ opacity: [0, 1, 1, 0], y: -520, x: item.drift, scale: [0.6, 1.25, 1], rotate: 18 }}
+          transition={{ delay: item.delay, duration: 3.2, ease: "easeOut" }}
+        >
+          {item.icon}
+        </motion.div>
+      ))}
     </div>
   );
 }
@@ -490,11 +539,16 @@ function Game({ snapshot, send, analysis, onTutorial }) {
   const [selected, setSelected] = useState([]);
   const [dropReady, setDropReady] = useState(false);
   const [showDealAnimation, setShowDealAnimation] = useState(() => snapshot.status === "playing");
+  const [celebratedFirstRank, setCelebratedFirstRank] = useState("");
   const tableRef = useRef(null);
   const hand = snapshot.hand || [];
   const selectedCards = hand.filter((card) => selected.includes(cardKey(card)));
   const myTurn = snapshot.currentPlayerId === snapshot.me;
   const currentPlayer = snapshot.players.find((player) => player.id === snapshot.currentPlayerId);
+  const firstRankPlayer = snapshot.players.find((player) => player.rank === 1);
+  const showFirstRankCelebration = firstRankPlayer && celebratedFirstRank !== firstRankPlayer.id;
+  const selectedRank = selectedCards[0]?.rank || "";
+  const sameRankCards = selectedRank ? hand.filter((card) => card.rank === selectedRank) : [];
 
   const playable = useMemo(() => {
     if (!myTurn) return new Set();
@@ -506,6 +560,11 @@ function Game({ snapshot, send, analysis, onTutorial }) {
     const key = cardKey(card);
     if (!myTurn || !playable.has(key)) return;
     setSelected((items) => (items.includes(key) ? items.filter((item) => item !== key) : [...items, key]));
+  };
+
+  const selectRankSet = (count) => {
+    if (!selectedRank) return;
+    setSelected(sameRankCards.slice(0, count).map(cardKey));
   };
 
   const playCards = (cardIds = selected) => {
@@ -534,6 +593,12 @@ function Game({ snapshot, send, analysis, onTutorial }) {
     <main className="mx-auto grid max-w-7xl gap-3 px-2 pb-6 pt-3 sm:px-4 lg:grid-cols-[1fr_320px] lg:gap-4 lg:pb-10 lg:pt-4">
       <AnimatePresence>
         {showDealAnimation && <DealAnimation players={snapshot.players} onDone={() => setShowDealAnimation(false)} />}
+        {showFirstRankCelebration && (
+          <FirstPlaceCelebration
+            playerName={firstRankPlayer.name}
+            onDone={() => setCelebratedFirstRank(firstRankPlayer.id)}
+          />
+        )}
       </AnimatePresence>
       <section className="space-y-4">
         <div className="rounded-3xl border border-cyan-300/20 bg-white/[0.04] p-3 sm:p-4">
@@ -617,6 +682,24 @@ function Game({ snapshot, send, analysis, onTutorial }) {
               <button type="button" disabled={!myTurn} onClick={() => send("pass_turn")} className="rounded-full border border-white/15 px-4 py-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-40 sm:px-5 sm:text-base">Pass</button>
             </div>
           </div>
+          {myTurn && selectedRank && sameRankCards.length > 1 && (
+            <div className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl border border-amber-200/15 bg-amber-200/10 p-2 text-sm text-amber-50">
+              <span className="font-bold">Selected {selectedRank}</span>
+              {sameRankCards.length >= 2 && (
+                <button type="button" onClick={() => selectRankSet(2)} className="rounded-full bg-amber-300 px-3 py-2 text-xs font-black text-slate-950">
+                  Select Pair
+                </button>
+              )}
+              {sameRankCards.length >= 3 && (
+                <button type="button" onClick={() => selectRankSet(3)} className="rounded-full bg-amber-300 px-3 py-2 text-xs font-black text-slate-950">
+                  Select Triplet
+                </button>
+              )}
+              <button type="button" onClick={() => setSelected([])} className="rounded-full border border-white/15 px-3 py-2 text-xs font-black text-white">
+                Clear
+              </button>
+            </div>
+          )}
           <div className="hand-fan relative mt-4 pb-6 pt-5">
             {hand.map((card, index) => (
               <div
@@ -635,6 +718,10 @@ function Game({ snapshot, send, analysis, onTutorial }) {
                   playable={playable.has(cardKey(card))}
                   draggable={myTurn && playable.has(cardKey(card))}
                   onClick={() => toggle(card)}
+                  onDragStart={() => {
+                    const key = cardKey(card);
+                    if (myTurn && playable.has(key) && !selected.includes(key)) setSelected((items) => [...items, key]);
+                  }}
                   onDragEnd={(_, info) => dragToTable(card, info)}
                 />
               </div>

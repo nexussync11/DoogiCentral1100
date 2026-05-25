@@ -84,8 +84,14 @@ body {
 
 @media (max-width: 520px) {
   .hand-fan {
-    min-height: 9rem;
+    min-height: 8.7rem;
     padding-inline: 0.25rem;
+  }
+
+  .hand-fan .playing-card {
+    width: 3.45rem !important;
+    height: 5.15rem !important;
+    font-size: 1rem !important;
   }
 
   .playing-card {
@@ -95,7 +101,12 @@ body {
 
 @media (max-width: 380px) {
   .hand-fan {
-    min-height: 8.3rem;
+    min-height: 8rem;
+  }
+
+  .hand-fan .playing-card {
+    width: 3.05rem !important;
+    height: 4.65rem !important;
   }
 
   .udita-dock {
