@@ -78,6 +78,21 @@ function cardKey(card) {
   return typeof card === "string" ? card : card?.id || card?.rank || "";
 }
 
+const suitIcons = {
+  S: "♠",
+  H: "♥",
+  D: "♦",
+  C: "♣",
+};
+
+function suitIcon(card) {
+  return typeof card === "string" ? "" : suitIcons[card?.suit] || "";
+}
+
+function isRedCard(card) {
+  return card?.suit === "H" || card?.suit === "D";
+}
+
 function useDoogiSocket() {
   const socketRef = useRef(null);
   const [connected, setConnected] = useState(false);
@@ -126,24 +141,43 @@ function useDoogiSocket() {
   return { connected, clientId, snapshot, error, setError, analysis, events, send };
 }
 
-const Card = memo(function Card({ card, selected, playable, onClick, small = false }) {
+const Card = memo(function Card({ card, selected, playable, onClick, onDragEnd, small = false, draggable = false }) {
   const label = cardLabel(card);
-  const isSpecial = label === "2" || label === "A";
+  const suit = suitIcon(card);
+  const red = isRedCard(card);
+  const displaySuit = suit || (label === "WIN" ? "★" : "♠");
   return (
     <motion.button
       type="button"
       whileTap={{ scale: 0.95 }}
       animate={{ y: selected ? -16 : 0 }}
+      drag={draggable ? true : false}
+      dragSnapToOrigin
+      dragElastic={0.18}
+      dragMomentum={false}
+      onDragEnd={onDragEnd}
       onClick={onClick}
       className={[
-        "relative shrink-0 rounded-xl border font-black shadow-lg transition",
-        small ? "h-16 w-11 text-lg" : "h-24 w-16 text-2xl sm:h-28 sm:w-20",
-        selected ? "border-cyan-200 bg-cyan-100 text-slate-950 shadow-cyan-400/30" : "border-white/15 bg-white text-slate-950",
+        "relative shrink-0 overflow-hidden rounded-xl border font-black shadow-lg transition touch-none",
+        small ? "h-16 w-11 text-base" : "h-28 w-20 text-2xl sm:h-32 sm:w-24",
+        selected ? "border-cyan-200 bg-cyan-50 text-slate-950 shadow-cyan-400/30" : "border-slate-200 bg-white text-slate-950",
         playable ? "ring-2 ring-cyan-300/70" : "opacity-90",
       ].join(" ")}
     >
-      <span className="absolute left-2 top-1 text-xs text-slate-500">DOOGI</span>
-      <span className={isSpecial ? "text-cyan-700" : ""}>{label}</span>
+      <span className={`absolute left-1.5 top-1 flex flex-col items-center leading-none ${red ? "text-red-600" : "text-slate-950"}`}>
+        <span className={small ? "text-[10px]" : "text-xs"}>{label}</span>
+        <span className={small ? "text-[10px]" : "text-sm"}>{displaySuit}</span>
+      </span>
+      <span className={`absolute right-1.5 bottom-1 flex rotate-180 flex-col items-center leading-none ${red ? "text-red-600" : "text-slate-950"}`}>
+        <span className={small ? "text-[10px]" : "text-xs"}>{label}</span>
+        <span className={small ? "text-[10px]" : "text-sm"}>{displaySuit}</span>
+      </span>
+      <span className={`grid h-full place-items-center ${red ? "text-red-600" : "text-slate-950"}`}>
+        <span className="flex flex-col items-center leading-none">
+          <span className={small ? "text-lg" : "text-3xl sm:text-4xl"}>{displaySuit}</span>
+          <span className={small ? "mt-0.5 text-sm" : "mt-1 text-xl sm:text-2xl"}>{label}</span>
+        </span>
+      </span>
     </motion.button>
   );
 });
@@ -356,6 +390,8 @@ function Chat({ messages = [], send }) {
 
 function Game({ snapshot, send, analysis, onTutorial }) {
   const [selected, setSelected] = useState([]);
+  const [dropReady, setDropReady] = useState(false);
+  const tableRef = useRef(null);
   const hand = snapshot.hand || [];
   const selectedCards = hand.filter((card) => selected.includes(cardKey(card)));
   const myTurn = snapshot.currentPlayerId === snapshot.me;
@@ -369,12 +405,29 @@ function Game({ snapshot, send, analysis, onTutorial }) {
 
   const toggle = (card) => {
     const key = cardKey(card);
+    if (!myTurn || !playable.has(key)) return;
     setSelected((items) => (items.includes(key) ? items.filter((item) => item !== key) : [...items, key]));
   };
 
-  const play = () => {
-    send("play_cards", { cardIds: selected });
+  const playCards = (cardIds = selected) => {
+    if (!myTurn || !cardIds.length) return;
+    send("play_cards", { cardIds });
     setSelected([]);
+  };
+
+  const play = () => playCards(selected);
+
+  const dragToTable = (card, info) => {
+    setDropReady(false);
+    if (!myTurn) return;
+    const rect = tableRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const { x, y } = info.point;
+    const droppedOnTable = x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+    if (!droppedOnTable) return;
+    const key = cardKey(card);
+    const group = selected.includes(key) ? selected : [key];
+    playCards(group);
   };
 
   return (
@@ -399,12 +452,20 @@ function Game({ snapshot, send, analysis, onTutorial }) {
           </div>
         </div>
 
-        <div className="min-h-60 rounded-3xl border border-white/10 bg-gradient-to-br from-emerald-950/70 via-slate-950 to-cyan-950/60 p-5">
+        <div
+          ref={tableRef}
+          onDragEnter={() => setDropReady(true)}
+          onDragLeave={() => setDropReady(false)}
+          className={`min-h-60 rounded-3xl border bg-gradient-to-br from-emerald-950/70 via-slate-950 to-cyan-950/60 p-5 transition ${
+            dropReady ? "border-cyan-200 shadow-2xl shadow-cyan-500/20" : "border-white/10"
+          }`}
+        >
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-cyan-200">Table</p>
           <div className="mt-6 flex min-h-28 flex-wrap items-center justify-center gap-3">
             {(snapshot.table?.cards || []).length ? snapshot.table.cards.map((card) => <Card key={cardKey(card)} card={card} small />) : <p className="text-gray-300">Table is clear. Start any valid move.</p>}
           </div>
           <p className="mt-5 text-center text-sm text-gray-300">{snapshot.table?.combo ? `${snapshot.table.combo} | rank ${snapshot.table.rank}` : "Fresh round"}</p>
+          {myTurn && <p className="mt-2 text-center text-xs font-semibold text-cyan-100">Drag selected cards here or tap Play.</p>}
         </div>
 
         <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
@@ -416,7 +477,17 @@ function Game({ snapshot, send, analysis, onTutorial }) {
             </div>
           </div>
           <div className="mt-5 flex gap-2 overflow-x-auto pb-5 pt-3">
-            {hand.map((card) => <Card key={cardKey(card)} card={card} selected={selected.includes(cardKey(card))} playable={playable.has(cardKey(card))} onClick={() => toggle(card)} />)}
+            {hand.map((card) => (
+              <Card
+                key={cardKey(card)}
+                card={card}
+                selected={selected.includes(cardKey(card))}
+                playable={playable.has(cardKey(card))}
+                draggable={myTurn && playable.has(cardKey(card))}
+                onClick={() => toggle(card)}
+                onDragEnd={(_, info) => dragToTable(card, info)}
+              />
+            ))}
           </div>
         </div>
       </section>
