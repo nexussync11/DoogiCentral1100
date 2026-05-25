@@ -16,6 +16,7 @@ body {
   margin: 0;
   background: #020711;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  overflow-x: hidden;
 }
 
 .game-felt {
@@ -71,26 +72,37 @@ body {
 }
 
 .hand-fan {
-  min-height: 9.5rem;
+  min-height: 10.25rem;
   overflow: visible;
-  padding-inline: 2rem;
+  padding-inline: 1.5rem;
 }
 
 .hand-card {
-  flex: 0 0 auto;
-}
-
-.hand-card + .hand-card {
-  margin-left: -2.35rem;
+  transform-origin: 50% 112%;
+  transition: transform 160ms ease, z-index 160ms ease;
 }
 
 @media (max-width: 520px) {
   .hand-fan {
-    min-height: 8.25rem;
-    padding-inline: 0.75rem;
+    min-height: 9rem;
+    padding-inline: 0.25rem;
   }
 
-  .hand-card + .hand-card {
-    margin-left: -2.7rem;
+  .playing-card {
+    border-radius: 0.62rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .hand-fan {
+    min-height: 8.3rem;
+  }
+
+  .udita-dock {
+    width: 4.25rem;
+  }
+
+  .udita-dock img {
+    height: 5.2rem;
   }
 }

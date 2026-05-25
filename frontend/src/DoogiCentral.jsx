@@ -205,13 +205,55 @@ const Card = memo(function Card({ card, selected, playable, onClick, onDragEnd, 
 
 function UditaDock() {
   return (
-    <aside className="udita-dock fixed bottom-4 right-4 z-30 hidden w-28 overflow-hidden rounded-3xl border border-amber-200/30 bg-black/70 shadow-2xl shadow-black/40 backdrop-blur md:block">
-      <img src={uditaImage} alt="Udita game guide" className="h-32 w-full object-cover object-left-top" />
+    <aside className="udita-dock fixed right-2 top-24 z-30 w-20 overflow-hidden rounded-2xl border border-amber-200/30 bg-black/70 shadow-2xl shadow-black/40 backdrop-blur md:right-4 md:top-auto md:bottom-4 md:w-28 md:rounded-3xl">
+      <img src={uditaImage} alt="Udita game guide" className="h-24 w-full object-cover object-left-top md:h-32" />
       <div className="border-t border-amber-200/20 p-2 text-center">
-        <p className="text-xs font-black uppercase tracking-[0.16em] text-amber-200">Udita</p>
-        <p className="mt-1 text-[11px] font-semibold leading-4 text-amber-50">Game guide</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.12em] text-amber-200 md:text-xs md:tracking-[0.16em]">Udita</p>
+        <p className="mt-1 hidden text-[11px] font-semibold leading-4 text-amber-50 md:block">Game guide</p>
       </div>
     </aside>
+  );
+}
+
+function DealAnimation({ players = [], onDone }) {
+  useEffect(() => {
+    const timer = setTimeout(onDone, 1800);
+    return () => clearTimeout(timer);
+  }, [onDone]);
+
+  const targets = [
+    { x: "-34vw", y: "-24vh", rotate: -18 },
+    { x: "34vw", y: "-24vh", rotate: 18 },
+    { x: "-36vw", y: "18vh", rotate: -12 },
+    { x: "36vw", y: "18vh", rotate: 12 },
+    { x: "-8vw", y: "30vh", rotate: -8 },
+    { x: "8vw", y: "30vh", rotate: 8 },
+  ];
+  const count = Math.min(Math.max(players.length * 4, 8), 24);
+
+  return (
+    <div className="pointer-events-none fixed inset-0 z-[60] overflow-hidden bg-black/30 backdrop-blur-[1px]">
+      <div className="absolute left-1/2 top-1/2 h-24 w-20 -translate-x-1/2 -translate-y-1/2">
+        <CardBack />
+      </div>
+      {Array.from({ length: count }).map((_, index) => {
+        const target = targets[index % Math.max(players.length, 1)] || targets[0];
+        return (
+          <motion.div
+            key={index}
+            className="absolute left-1/2 top-1/2"
+            initial={{ x: "-50%", y: "-50%", scale: 0.75, opacity: 0.95, rotate: 0 }}
+            animate={{ x: target.x, y: target.y, scale: 0.42, opacity: 0, rotate: target.rotate }}
+            transition={{ delay: index * 0.045, duration: 0.72, ease: "easeOut" }}
+          >
+            <CardBack />
+          </motion.div>
+        );
+      })}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 rounded-full border border-amber-200/30 bg-black/70 px-5 py-3 text-sm font-black text-amber-100">
+        Udita is dealing the cards...
+      </div>
+    </div>
   );
 }
 
@@ -447,6 +489,7 @@ function Chat({ messages = [], send }) {
 function Game({ snapshot, send, analysis, onTutorial }) {
   const [selected, setSelected] = useState([]);
   const [dropReady, setDropReady] = useState(false);
+  const [showDealAnimation, setShowDealAnimation] = useState(() => snapshot.status === "playing");
   const tableRef = useRef(null);
   const hand = snapshot.hand || [];
   const selectedCards = hand.filter((card) => selected.includes(cardKey(card)));
@@ -488,9 +531,12 @@ function Game({ snapshot, send, analysis, onTutorial }) {
   };
 
   return (
-    <main className="mx-auto grid max-w-7xl gap-4 px-4 pb-10 pt-4 lg:grid-cols-[1fr_320px]">
+    <main className="mx-auto grid max-w-7xl gap-3 px-2 pb-6 pt-3 sm:px-4 lg:grid-cols-[1fr_320px] lg:gap-4 lg:pb-10 lg:pt-4">
+      <AnimatePresence>
+        {showDealAnimation && <DealAnimation players={snapshot.players} onDone={() => setShowDealAnimation(false)} />}
+      </AnimatePresence>
       <section className="space-y-4">
-        <div className="rounded-3xl border border-cyan-300/20 bg-white/[0.04] p-4">
+        <div className="rounded-3xl border border-cyan-300/20 bg-white/[0.04] p-3 sm:p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-sm uppercase tracking-[0.24em] text-cyan-200">Room {snapshot.roomCode}</p>
@@ -498,7 +544,7 @@ function Game({ snapshot, send, analysis, onTutorial }) {
             </div>
             <button type="button" onClick={onTutorial} className="rounded-full border border-white/15 px-4 py-2 text-sm font-bold text-white">Rules</button>
           </div>
-          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-6">
             {snapshot.players.map((player) => (
               <div key={player.id} className={`rounded-2xl border p-3 ${player.id === snapshot.currentPlayerId ? "border-cyan-300 bg-cyan-400/10" : "border-white/10 bg-black/20"}`}>
                 <p className="truncate font-bold text-white">{player.name}</p>
@@ -519,7 +565,7 @@ function Game({ snapshot, send, analysis, onTutorial }) {
           ref={tableRef}
           onDragEnter={() => setDropReady(true)}
           onDragLeave={() => setDropReady(false)}
-          className={`game-felt min-h-60 rounded-3xl border p-5 transition ${
+          className={`game-felt min-h-60 rounded-3xl border p-3 transition sm:p-5 ${
             dropReady ? "border-cyan-200 shadow-2xl shadow-cyan-500/20" : "border-white/10"
           }`}
         >
@@ -531,7 +577,7 @@ function Game({ snapshot, send, analysis, onTutorial }) {
               <span className="absolute right-0 top-2"><CardBack small offset={4} /></span>
             </div>
           </div>
-          <div className="mt-6 flex min-h-44 flex-col items-center justify-center gap-4">
+          <div className="mt-4 flex min-h-44 flex-col items-center justify-center gap-3 sm:mt-6 sm:gap-4">
             {(snapshot.tablePlays || []).length ? (
               <div className="flex w-full flex-wrap items-end justify-center gap-4">
                 {snapshot.tablePlays.map((play, playIndex) => {
@@ -541,7 +587,7 @@ function Game({ snapshot, send, analysis, onTutorial }) {
                       key={play.id}
                       initial={{ opacity: 0, y: 24, scale: 0.92 }}
                       animate={{ opacity: latest ? 1 : 0.7, y: 0, scale: latest ? 1 : 0.82 }}
-                      className="rounded-2xl border border-white/10 bg-black/20 p-3"
+                      className="rounded-2xl border border-white/10 bg-black/20 p-2 sm:p-3"
                     >
                       <p className="mb-2 text-center text-xs font-bold text-amber-100">{play.playerName}</p>
                       <div className="flex justify-center">
@@ -559,21 +605,29 @@ function Game({ snapshot, send, analysis, onTutorial }) {
               <p className="text-gray-300">Table is clear. Start any valid move.</p>
             )}
           </div>
-          <p className="mt-5 text-center text-sm text-gray-300">{snapshot.table?.combo ? `${snapshot.table.combo} | rank ${snapshot.table.rank}` : "Fresh round"}</p>
+          <p className="mt-4 text-center text-sm text-gray-300 sm:mt-5">{snapshot.table?.combo ? `${snapshot.table.combo} | rank ${snapshot.table.rank}` : "Fresh round"}</p>
           {myTurn && <p className="mt-2 text-center text-xs font-semibold text-cyan-100">Drag upward or drop selected cards here. You can also tap Play.</p>}
         </div>
 
-        <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
+        <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-3 sm:p-4">
           <div className="flex items-center justify-between gap-3">
             <h2 className="font-black text-white">Your Hand</h2>
             <div className="flex gap-2">
-              <button type="button" disabled={!myTurn} onClick={play} className="rounded-full bg-cyan-400 px-5 py-3 font-black text-slate-950 disabled:cursor-not-allowed disabled:opacity-40">Play</button>
-              <button type="button" disabled={!myTurn} onClick={() => send("pass_turn")} className="rounded-full border border-white/15 px-5 py-3 font-black text-white disabled:cursor-not-allowed disabled:opacity-40">Pass</button>
+              <button type="button" disabled={!myTurn} onClick={play} className="rounded-full bg-cyan-400 px-4 py-3 text-sm font-black text-slate-950 disabled:cursor-not-allowed disabled:opacity-40 sm:px-5 sm:text-base">Play</button>
+              <button type="button" disabled={!myTurn} onClick={() => send("pass_turn")} className="rounded-full border border-white/15 px-4 py-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-40 sm:px-5 sm:text-base">Pass</button>
             </div>
           </div>
-          <div className="hand-fan mt-5 flex justify-center pb-6 pt-5">
+          <div className="hand-fan relative mt-4 pb-6 pt-5">
             {hand.map((card, index) => (
-              <div key={cardKey(card)} className="hand-card">
+              <div
+                key={cardKey(card)}
+                className="hand-card absolute top-4"
+                style={{
+                  left: hand.length <= 1 ? "50%" : `${(index / (hand.length - 1)) * 100}%`,
+                  transform: `translateX(-50%) rotate(${hand.length <= 1 ? 0 : -13 + (26 * index) / (hand.length - 1)}deg)`,
+                  zIndex: selected.includes(cardKey(card)) ? 80 : index + 1,
+                }}
+              >
                 <Card
                   card={card}
                   index={index}
