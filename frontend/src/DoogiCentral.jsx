@@ -21,7 +21,7 @@ import nexusLogo from "./assets/NexusSyncLogo.png";
 
 const WS_URL =
   import.meta.env.VITE_DOOGI_WS_URL ||
-  (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+  (typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
     ? "ws://127.0.0.1:8787/doogi-ws"
     : "wss://doogicentralserver.onrender.com/doogi-ws");
 
@@ -88,6 +88,11 @@ function useDoogiSocket() {
   const [events, setEvents] = useState([]);
 
   useEffect(() => {
+    if (typeof WebSocket === "undefined") {
+      setError("This browser does not support WebSockets.");
+      return undefined;
+    }
+
     const ws = new WebSocket(WS_URL);
     socketRef.current = ws;
 
@@ -95,12 +100,16 @@ function useDoogiSocket() {
     ws.onclose = () => setConnected(false);
     ws.onerror = () => setError("Realtime server is not connected. Check VITE_DOOGI_WS_URL or start the Doogi server.");
     ws.onmessage = (event) => {
-      const message = JSON.parse(event.data);
-      if (message.type === "welcome") setClientId(message.clientId);
-      if (message.type === "snapshot") setSnapshot(message.payload);
-      if (message.type === "error") setError(message.message);
-      if (message.type === "ai_analysis_ready") setAnalysis(message.analysis);
-      if (message.type === "event") setEvents((items) => [message.payload, ...items].slice(0, 40));
+      try {
+        const message = JSON.parse(event.data);
+        if (message.type === "welcome") setClientId(message.clientId);
+        if (message.type === "snapshot") setSnapshot(message.payload);
+        if (message.type === "error") setError(message.message);
+        if (message.type === "ai_analysis_ready") setAnalysis(message.analysis);
+        if (message.type === "event") setEvents((items) => [message.payload, ...items].slice(0, 40));
+      } catch {
+        setError("Realtime server sent an unreadable message.");
+      }
     };
 
     return () => ws.close();
@@ -163,7 +172,14 @@ function Tutorial({ onClose }) {
           </motion.div>
         </AnimatePresence>
         <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-          <button type="button" onClick={() => localStorage.setItem("doogi_tutorial_seen", "1") || onClose()} className="text-sm font-semibold text-gray-300 underline">
+          <button type="button" onClick={() => {
+            try {
+              localStorage.setItem("doogi_tutorial_seen", "1");
+            } catch {
+              // Private browsing can block storage. The tutorial still closes normally.
+            }
+            onClose();
+          }} className="text-sm font-semibold text-gray-300 underline">
             Do not show again
           </button>
           <div className="flex gap-2">
@@ -271,7 +287,7 @@ function RoomForm({ mode, send }) {
 }
 
 function Lobby({ snapshot, send, onTutorial }) {
-  const invite = `${window.location.origin}/doogicentral?room=${snapshot.roomCode}`;
+  const invite = `${window.location.origin}?room=${snapshot.roomCode}`;
   return (
     <section className="mx-auto max-w-4xl px-4 py-8">
       <div className="rounded-3xl border border-cyan-300/20 bg-white/[0.04] p-5">
@@ -433,7 +449,11 @@ export default function DoogiCentral() {
     const params = new URLSearchParams(window.location.search);
     const room = params.get("room");
     if (room) setMode("join");
-    if (!localStorage.getItem("doogi_tutorial_seen")) setShowTutorial(true);
+    try {
+      if (!localStorage.getItem("doogi_tutorial_seen")) setShowTutorial(true);
+    } catch {
+      setShowTutorial(true);
+    }
   }, []);
 
   return (
