@@ -53,6 +53,10 @@ function playerSnapshot(room, player) {
     maxPlayers: room.maxPlayers,
     currentPlayerId: room.currentPlayerId,
     table: room.table,
+    tablePlays: (room.tablePlays || []).map((play) => ({
+      ...play,
+      playerName: room.players.find((item) => item.id === play.playerId)?.name || "Player",
+    })),
     hand: sortHand([...(room.hands[player.id] || [])]),
     players: room.players.map((item) => ({
       id: item.id,
@@ -138,6 +142,7 @@ function createRoom(ws, payload) {
     chat: [],
     history: [],
     moves: [],
+    tablePlays: [],
     rankings: [],
     currentPlayerId: null,
     createdAt: Date.now(),

@@ -155,11 +155,16 @@ function CardBack({ small = false, offset = 0 }) {
   );
 }
 
-const Card = memo(function Card({ card, selected, playable, onClick, onDragEnd, small = false, draggable = false, index = 0 }) {
+const Card = memo(function Card({ card, selected, playable, onClick, onDragEnd, small = false, variant = "hand", draggable = false, index = 0 }) {
   const label = cardLabel(card);
   const suit = suitIcon(card);
   const red = isRedCard(card);
   const displaySuit = suit || (label === "WIN" ? "\u2605" : "\u2660");
+  const sizeClass = small
+    ? "h-16 w-11 text-base"
+    : variant === "table"
+      ? "h-28 w-20 text-2xl sm:h-36 sm:w-24"
+      : "h-24 w-16 text-xl sm:h-28 sm:w-20 sm:text-2xl";
   return (
     <motion.button
       type="button"
@@ -175,7 +180,7 @@ const Card = memo(function Card({ card, selected, playable, onClick, onDragEnd, 
       onClick={onClick}
       className={[
         "playing-card relative shrink-0 overflow-hidden rounded-xl border font-black shadow-lg transition touch-none",
-        small ? "h-16 w-11 text-base" : "h-28 w-20 text-2xl sm:h-32 sm:w-24",
+        sizeClass,
         selected ? "border-cyan-200 bg-cyan-50 text-slate-950 shadow-cyan-400/30" : "border-slate-200 bg-white text-slate-950",
         playable ? "ring-2 ring-cyan-300/70" : "opacity-90",
       ].join(" ")}
@@ -197,6 +202,18 @@ const Card = memo(function Card({ card, selected, playable, onClick, onDragEnd, 
     </motion.button>
   );
 });
+
+function UditaDock() {
+  return (
+    <aside className="udita-dock fixed bottom-4 right-4 z-30 hidden w-28 overflow-hidden rounded-3xl border border-amber-200/30 bg-black/70 shadow-2xl shadow-black/40 backdrop-blur md:block">
+      <img src={uditaImage} alt="Udita game guide" className="h-32 w-full object-cover object-left-top" />
+      <div className="border-t border-amber-200/20 p-2 text-center">
+        <p className="text-xs font-black uppercase tracking-[0.16em] text-amber-200">Udita</p>
+        <p className="mt-1 text-[11px] font-semibold leading-4 text-amber-50">Game guide</p>
+      </div>
+    </aside>
+  );
+}
 
 function Tutorial({ onClose }) {
   const [index, setIndex] = useState(0);
@@ -463,7 +480,8 @@ function Game({ snapshot, send, analysis, onTutorial }) {
     if (!rect) return;
     const { x, y } = info.point;
     const droppedOnTable = x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
-    if (!droppedOnTable) return;
+    const flickedUpToPlay = info.offset?.y < -45;
+    if (!droppedOnTable && !flickedUpToPlay) return;
     const key = cardKey(card);
     const group = selected.includes(key) ? selected : [key];
     playCards(group);
@@ -513,11 +531,36 @@ function Game({ snapshot, send, analysis, onTutorial }) {
               <span className="absolute right-0 top-2"><CardBack small offset={4} /></span>
             </div>
           </div>
-          <div className="mt-6 flex min-h-28 flex-wrap items-center justify-center gap-3">
-            {(snapshot.table?.cards || []).length ? snapshot.table.cards.map((card, index) => <Card key={cardKey(card)} card={card} small index={index} />) : <p className="text-gray-300">Table is clear. Start any valid move.</p>}
+          <div className="mt-6 flex min-h-44 flex-col items-center justify-center gap-4">
+            {(snapshot.tablePlays || []).length ? (
+              <div className="flex w-full flex-wrap items-end justify-center gap-4">
+                {snapshot.tablePlays.map((play, playIndex) => {
+                  const latest = playIndex === snapshot.tablePlays.length - 1;
+                  return (
+                    <motion.div
+                      key={play.id}
+                      initial={{ opacity: 0, y: 24, scale: 0.92 }}
+                      animate={{ opacity: latest ? 1 : 0.7, y: 0, scale: latest ? 1 : 0.82 }}
+                      className="rounded-2xl border border-white/10 bg-black/20 p-3"
+                    >
+                      <p className="mb-2 text-center text-xs font-bold text-amber-100">{play.playerName}</p>
+                      <div className="flex justify-center">
+                        {play.cards.map((card, index) => (
+                          <div key={cardKey(card)} className={index ? "-ml-4 sm:-ml-5" : ""}>
+                            <Card card={card} variant={latest ? "table" : "hand"} index={index} />
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-gray-300">Table is clear. Start any valid move.</p>
+            )}
           </div>
           <p className="mt-5 text-center text-sm text-gray-300">{snapshot.table?.combo ? `${snapshot.table.combo} | rank ${snapshot.table.rank}` : "Fresh round"}</p>
-          {myTurn && <p className="mt-2 text-center text-xs font-semibold text-cyan-100">Drag selected cards here or tap Play.</p>}
+          {myTurn && <p className="mt-2 text-center text-xs font-semibold text-cyan-100">Drag upward or drop selected cards here. You can also tap Play.</p>}
         </div>
 
         <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
@@ -528,18 +571,19 @@ function Game({ snapshot, send, analysis, onTutorial }) {
               <button type="button" disabled={!myTurn} onClick={() => send("pass_turn")} className="rounded-full border border-white/15 px-5 py-3 font-black text-white disabled:cursor-not-allowed disabled:opacity-40">Pass</button>
             </div>
           </div>
-          <div className="mt-5 flex gap-2 overflow-x-auto pb-5 pt-3">
+          <div className="hand-fan mt-5 flex justify-center pb-6 pt-5">
             {hand.map((card, index) => (
-              <Card
-                key={cardKey(card)}
-                card={card}
-                index={index}
-                selected={selected.includes(cardKey(card))}
-                playable={playable.has(cardKey(card))}
-                draggable={myTurn && playable.has(cardKey(card))}
-                onClick={() => toggle(card)}
-                onDragEnd={(_, info) => dragToTable(card, info)}
-              />
+              <div key={cardKey(card)} className="hand-card">
+                <Card
+                  card={card}
+                  index={index}
+                  selected={selected.includes(cardKey(card))}
+                  playable={playable.has(cardKey(card))}
+                  draggable={myTurn && playable.has(cardKey(card))}
+                  onClick={() => toggle(card)}
+                  onDragEnd={(_, info) => dragToTable(card, info)}
+                />
+              </div>
             ))}
           </div>
         </div>
@@ -582,6 +626,7 @@ export default function DoogiCentral() {
 
   return (
     <div className="min-h-screen bg-[#020711] text-white">
+      <UditaDock />
       <header className="sticky top-0 z-40 border-b border-white/10 bg-[#020711]/90 px-4 py-3 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
           <div className="flex items-center gap-3">

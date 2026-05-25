@@ -65,3 +65,32 @@ body {
     radial-gradient(circle at 80% 20%, rgba(20, 184, 166, 0.12), transparent 28%),
     rgba(255, 255, 255, 0.04);
 }
+
+.udita-dock {
+  transform: translateZ(0);
+}
+
+.hand-fan {
+  min-height: 9.5rem;
+  overflow: visible;
+  padding-inline: 2rem;
+}
+
+.hand-card {
+  flex: 0 0 auto;
+}
+
+.hand-card + .hand-card {
+  margin-left: -2.35rem;
+}
+
+@media (max-width: 520px) {
+  .hand-fan {
+    min-height: 8.25rem;
+    padding-inline: 0.75rem;
+  }
+
+  .hand-card + .hand-card {
+    margin-left: -2.7rem;
+  }
+}

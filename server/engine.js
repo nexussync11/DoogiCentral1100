@@ -24,8 +24,32 @@ export function dealCards(players) {
   deck.forEach((card, index) => {
     hands[players[index % players.length].id].push(card);
   });
+  reduceHeavyRankClusters(hands, players);
   Object.values(hands).forEach(sortHand);
   return hands;
+}
+
+function countRank(hand, rank) {
+  return hand.filter((card) => card.rank === rank).length;
+}
+
+function reduceHeavyRankClusters(hands, players) {
+  players.forEach((player) => {
+    const hand = hands[player.id];
+    rankOrder.forEach((rank) => {
+      while (countRank(hand, rank) > 2) {
+        const extraIndex = hand.findIndex((card) => card.rank === rank);
+        const extra = hand[extraIndex];
+        const target = players.find((candidate) => candidate.id !== player.id && countRank(hands[candidate.id], rank) < 2);
+        if (!target) break;
+        const targetHand = hands[target.id];
+        const swapIndex = targetHand.findIndex((card) => countRank(hand, card.rank) < 2 && card.rank !== rank);
+        if (swapIndex < 0) break;
+        hand[extraIndex] = targetHand[swapIndex];
+        targetHand[swapIndex] = extra;
+      }
+    });
+  });
 }
 
 export function sortHand(hand) {
@@ -84,6 +108,7 @@ export function shouldEndRound(room) {
 
 export function clearTableForWinner(room, winnerId) {
   room.table = { combo: null, rank: null, rankValue: -1, cards: [], lastPlayerId: null };
+  room.tablePlays = [];
   room.passes = new Set();
   room.currentPlayerId = winnerId;
 }
@@ -95,6 +120,10 @@ export function applyMove(room, playerId, cardIds) {
   const { move } = validation;
   room.hands[playerId] = room.hands[playerId].filter((card) => !cardIds.includes(card.id));
   room.table = { ...move, lastPlayerId: playerId };
+  room.tablePlays = [
+    ...(room.tablePlays || []),
+    { id: `${Date.now()}-${playerId}`, playerId, cards: move.cards, combo: move.combo, rank: move.rank },
+  ].slice(-8);
   room.passes = new Set();
   room.moves.push({
     type: "play",
@@ -147,6 +176,7 @@ export function startGame(room) {
   if (room.players.length > room.maxPlayers) return { ok: false, message: "Too many players." };
   room.hands = dealCards(room.players);
   room.table = { combo: null, rank: null, rankValue: -1, cards: [], lastPlayerId: null };
+  room.tablePlays = [];
   room.passes = new Set();
   room.rankings = [];
   room.moves = [];
