@@ -24,32 +24,8 @@ export function dealCards(players) {
   deck.forEach((card, index) => {
     hands[players[index % players.length].id].push(card);
   });
-  reduceHeavyRankClusters(hands, players);
   Object.values(hands).forEach(sortHand);
   return hands;
-}
-
-function countRank(hand, rank) {
-  return hand.filter((card) => card.rank === rank).length;
-}
-
-function reduceHeavyRankClusters(hands, players) {
-  players.forEach((player) => {
-    const hand = hands[player.id];
-    rankOrder.forEach((rank) => {
-      while (countRank(hand, rank) > 2) {
-        const extraIndex = hand.findIndex((card) => card.rank === rank);
-        const extra = hand[extraIndex];
-        const target = players.find((candidate) => candidate.id !== player.id && countRank(hands[candidate.id], rank) < 2);
-        if (!target) break;
-        const targetHand = hands[target.id];
-        const swapIndex = targetHand.findIndex((card) => countRank(hand, card.rank) < 2 && card.rank !== rank);
-        if (swapIndex < 0) break;
-        hand[extraIndex] = targetHand[swapIndex];
-        targetHand[swapIndex] = extra;
-      }
-    });
-  });
 }
 
 export function sortHand(hand) {
