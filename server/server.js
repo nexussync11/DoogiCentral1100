@@ -2,6 +2,7 @@ import http from "node:http";
 import crypto from "node:crypto";
 import { WebSocketServer } from "ws";
 import { applyMove, fallbackAnalysis, passTurn, sortHand, startGame, summarizeForAI } from "./engine.js";
+import { getStatsSnapshot, trackGameCompleted, trackGameStarted, trackPlayer, trackVisit } from "./stats.js";
 
 const port = Number(process.env.PORT || 8787);
 const roomTtlMs = Number(process.env.ROOM_TTL_MS || 1000 * 60 * 90);
@@ -26,6 +27,17 @@ function safeText(value, max = 80) {
 
 function send(ws, type, payload = {}) {
   if (ws.readyState === ws.OPEN) ws.send(JSON.stringify({ type, ...payload }));
+}
+
+function sendJson(res, status, payload) {
+  res.writeHead(status, {
+    "access-control-allow-origin": "*",
+    "access-control-allow-methods": "GET,POST,OPTIONS",
+    "access-control-allow-headers": "content-type",
+    "cache-control": "no-store",
+    "content-type": "application/json",
+  });
+  res.end(JSON.stringify(payload));
 }
 
 function event(room, text) {
@@ -149,6 +161,7 @@ function createRoom(ws, payload) {
     lastActiveAt: Date.now(),
   };
   rooms.set(code, room);
+  trackPlayer(player.id);
   send(ws, "room_created", { roomCode: code });
   broadcast(room);
 }
@@ -161,13 +174,15 @@ function joinRoom(ws, payload) {
   if (room.password && room.password !== safeText(payload.password || "", 60)) return send(ws, "error", { message: "Incorrect room password." });
   if (room.players.length >= room.maxPlayers) return send(ws, "error", { message: "Room is full." });
 
-  room.players.push({
+  const player = {
     id: id("P"),
     socketId: ws.clientId,
     name: safeText(payload.name || "Player"),
     ready: false,
     host: false,
-  });
+  };
+  room.players.push(player);
+  trackPlayer(player.id);
   event(room, `${room.players.at(-1).name} joined the room.`);
   broadcast(room);
 }
@@ -190,6 +205,7 @@ function handleMessage(ws, message) {
     if (!player.host) return send(ws, "error", { message: "Only host can start the game." });
     const result = startGame(room);
     if (!result.ok) return send(ws, "error", { message: result.message });
+    trackGameStarted(room);
     event(room, "Game started.");
   }
 
@@ -198,6 +214,7 @@ function handleMessage(ws, message) {
     if (!result.ok) return send(ws, "error", { message: result.message });
     event(room, `${player.name} played ${result.move.cards.map((card) => card.rank).join(", ")}.`);
     if (result.gameOver) {
+      trackGameCompleted(room);
       event(room, "Game over. Generating AI analysis.");
       generateAIAnalysis(room).then((analysis) => {
         room.players.forEach((item) => {
@@ -228,11 +245,48 @@ function handleMessage(ws, message) {
 }
 
 const server = http.createServer((req, res) => {
-  if (req.url === "/health") {
-    res.writeHead(200, { "content-type": "application/json" });
-    res.end(JSON.stringify({ ok: true, rooms: rooms.size }));
+  if (req.method === "OPTIONS") {
+    sendJson(res, 204, {});
     return;
   }
+
+  if (req.url === "/health") {
+    sendJson(res, 200, { ok: true, rooms: rooms.size, statsDate: getStatsSnapshot().date });
+    return;
+  }
+
+  if (req.url === "/stats/visit" && req.method === "POST") {
+    let body = "";
+    req.on("data", (chunk) => {
+      body += chunk;
+      if (body.length > 512) req.destroy();
+    });
+    req.on("end", () => {
+      try {
+        const payload = body ? JSON.parse(body) : {};
+        trackVisit(payload.visitorId);
+        sendJson(res, 200, { ok: true });
+      } catch {
+        sendJson(res, 400, { ok: false, message: "Invalid visit payload." });
+      }
+    });
+    return;
+  }
+
+  if (req.url?.startsWith("/stats") && req.method === "GET") {
+    const password = new URL(req.url, "http://localhost").searchParams.get("password") || "";
+    if (!process.env.ADMIN_STATS_PASSWORD) {
+      sendJson(res, 403, { ok: false, message: "ADMIN_STATS_PASSWORD is not configured." });
+      return;
+    }
+    if (password !== process.env.ADMIN_STATS_PASSWORD) {
+      sendJson(res, 401, { ok: false, message: "Invalid stats password." });
+      return;
+    }
+    sendJson(res, 200, { ok: true, stats: getStatsSnapshot() });
+    return;
+  }
+
   res.writeHead(404);
   res.end();
 });

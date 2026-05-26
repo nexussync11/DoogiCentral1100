@@ -26,6 +26,8 @@ const WS_URL =
     ? "ws://127.0.0.1:8787/doogi-ws"
     : "wss://doogicentralserver.onrender.com/doogi-ws");
 
+const API_URL = WS_URL.replace(/^wss:/, "https:").replace(/^ws:/, "http:").replace(/\/doogi-ws$/, "");
+
 const tutorialSlides = [
   {
     title: "Rank order",
@@ -140,6 +142,145 @@ function useDoogiSocket() {
   };
 
   return { connected, clientId, snapshot, error, setError, analysis, events, send };
+}
+
+function getVisitorId() {
+  const key = "doogi_visitor_id";
+  try {
+    const existing = localStorage.getItem(key);
+    if (existing) return existing;
+    const created = window.crypto?.randomUUID?.() || `visitor-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    localStorage.setItem(key, created);
+    return created;
+  } catch {
+    return `session-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  }
+}
+
+function trackAnonymousVisit() {
+  fetch(`${API_URL}/stats/visit`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ visitorId: getVisitorId() }),
+    keepalive: true,
+  }).catch(() => {
+    // Analytics should never block gameplay or show errors to players.
+  });
+}
+
+function AdminStats() {
+  const [password, setPassword] = useState("");
+  const [stats, setStats] = useState(null);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    document.title = "Doogi Central Admin Stats";
+  }, []);
+
+  const loadStats = async (event) => {
+    event.preventDefault();
+    setLoading(true);
+    setError("");
+    try {
+      const response = await fetch(`${API_URL}/stats?password=${encodeURIComponent(password)}`);
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.message || "Unable to load stats.");
+      setStats(data.stats);
+    } catch (err) {
+      setError(err.message || "Unable to load stats.");
+      setStats(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const metricCards = stats
+    ? [
+        ["Total visits", stats.totalVisits],
+        ["Unique visitors", stats.uniqueVisitors],
+        ["Games started", stats.gamesStarted],
+        ["Games completed", stats.gamesCompleted],
+        ["Unique players", stats.uniquePlayers],
+        ["Avg game duration", `${stats.averageGameDurationMinutes} min`],
+        ["Avg players/game", stats.averagePlayersPerGame],
+      ]
+    : [];
+
+  return (
+    <main className="min-h-screen bg-[#020711] px-4 py-8 text-white">
+      <section className="mx-auto max-w-5xl">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <img src={nexusLogo} alt="NexusSync Solutions" className="h-12 rounded-xl bg-white p-1.5" />
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.24em] text-cyan-200">Doogi Central</p>
+              <h1 className="text-3xl font-black">Daily Engagement Stats</h1>
+            </div>
+          </div>
+          <p className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-4 py-2 text-sm font-bold text-cyan-100">
+            Privacy-friendly aggregate counters
+          </p>
+        </div>
+
+        <form onSubmit={loadStats} className="mt-8 rounded-3xl border border-cyan-300/20 bg-white/[0.04] p-5 shadow-xl shadow-cyan-950/20">
+          <label className="text-sm font-bold uppercase tracking-[0.2em] text-cyan-200" htmlFor="stats-password">
+            Admin Password
+          </label>
+          <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+            <input
+              id="stats-password"
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="Enter stats password"
+              className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-black/35 px-4 py-3 text-white outline-none focus:border-cyan-300"
+            />
+            <button type="submit" disabled={loading || !password} className="rounded-2xl bg-cyan-400 px-6 py-3 font-black text-slate-950 disabled:opacity-50">
+              {loading ? "Loading..." : "View Stats"}
+            </button>
+          </div>
+          {error && <p className="mt-3 text-sm font-semibold text-amber-200">{error}</p>}
+        </form>
+
+        {stats && (
+          <div className="mt-8 space-y-6">
+            <div>
+              <p className="text-sm font-bold uppercase tracking-[0.22em] text-cyan-200">Date</p>
+              <h2 className="mt-1 text-2xl font-black">{stats.date}</h2>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {metricCards.map(([label, value]) => (
+                <div key={label} className="rounded-3xl border border-white/10 bg-white/[0.04] p-5">
+                  <p className="text-sm text-gray-400">{label}</p>
+                  <p className="mt-2 text-3xl font-black text-cyan-100">{value}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="rounded-3xl border border-cyan-300/20 bg-cyan-400/10 p-5">
+              <h2 className="text-xl font-black">Milestone Status</h2>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                {stats.milestoneStatus.map((item) => (
+                  <div key={item.milestone} className="rounded-2xl bg-black/25 p-4">
+                    <p className="font-black">{item.milestone}+ completed games</p>
+                    <p className="mt-2 text-sm text-gray-300">
+                      {item.reached ? "Reached" : "Not reached yet"} | Alert {item.alertSent ? "sent" : "not sent"}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <p className="text-sm leading-6 text-gray-400">
+              This dashboard does not store chat, player hands, move history, AI reports, or personal player data. Counts reset daily and remain in server memory only.
+            </p>
+          </div>
+        )}
+      </section>
+    </main>
+  );
 }
 
 function CardBack({ small = false, offset = 0 }) {
@@ -791,7 +932,7 @@ function Game({ snapshot, send, analysis, onTutorial }) {
   );
 }
 
-export default function DoogiCentral() {
+function DoogiGameApp() {
   const { connected, snapshot, error, setError, analysis, send } = useDoogiSocket();
   const [mode, setMode] = useState("landing");
   const [showTutorial, setShowTutorial] = useState(false);
@@ -806,6 +947,7 @@ export default function DoogiCentral() {
     } catch {
       setShowTutorial(true);
     }
+    trackAnonymousVisit();
   }, []);
 
   return (
@@ -842,4 +984,11 @@ export default function DoogiCentral() {
       {showTutorial && <Tutorial onClose={() => setShowTutorial(false)} />}
     </div>
   );
+}
+
+export default function DoogiCentral() {
+  const isAdminStats =
+    typeof window !== "undefined" &&
+    (window.location.pathname.includes("/admin/stats") || new URLSearchParams(window.location.search).get("admin") === "stats");
+  return isAdminStats ? <AdminStats /> : <DoogiGameApp />;
 }

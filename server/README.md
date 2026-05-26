@@ -66,6 +66,59 @@ OPENAI_MODEL=gpt-4o-mini
 
 Do not put OpenAI API keys in the frontend.
 
+## Daily Engagement Monitoring
+
+The server tracks lightweight daily aggregate counters in memory only:
+
+- total site visits
+- unique anonymous visitors
+- games started
+- games completed
+- unique session players
+- average game duration
+- average players per completed game
+
+It does not store chat messages, card hands, gameplay history, move history, AI reports, or personal player data.
+
+To enable milestone email alerts and admin stats, configure these server environment variables:
+
+```env
+ADMIN_ALERT_EMAILS=testdevds20@gmail.com,info@nexussyncsolutions.com
+RESEND_API_KEY=
+FROM_EMAIL=alerts@doogicentral.com
+ADMIN_STATS_PASSWORD=
+```
+
+Milestone alerts are sent once per day when completed games reach 50 and 100. If `RESEND_API_KEY` is empty, milestones are logged but no email is sent.
+
+Admin dashboard:
+
+```text
+/doogicentral/admin/stats
+```
+
+Immediate static-host fallback URL:
+
+```text
+/?admin=stats
+```
+
+For the clean `/doogicentral/admin/stats` path on Render Static Sites, add a rewrite rule in the frontend Render service:
+
+```text
+Source: /doogicentral/admin/stats
+Destination: /index.html
+Action: Rewrite
+```
+
+The dashboard calls the server endpoint:
+
+```text
+GET /stats?password=YOUR_ADMIN_STATS_PASSWORD
+```
+
+On Render, add the environment variables to the Doogi server service, then redeploy the server. The frontend uses the same `VITE_DOOGI_WS_URL` and derives the stats API URL automatically.
+
 ## Architecture Notes
 
 - Server-authoritative game logic
