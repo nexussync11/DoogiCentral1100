@@ -186,18 +186,18 @@ const Card = memo(function Card({ card, selected, playable, onClick, onDragStart
         playable ? "ring-2 ring-cyan-300/70" : "opacity-90",
       ].join(" ")}
     >
-      <span className={`absolute left-1.5 top-1 flex flex-col items-center leading-none ${red ? "text-red-600" : "text-slate-950"}`}>
-        <span className={small ? "text-[10px]" : "text-xs"}>{label}</span>
-        <span className={small ? "text-[10px]" : "text-sm"}>{displaySuit}</span>
+      <span className={`card-corner card-corner-top absolute left-1.5 top-1 flex flex-col items-center leading-none ${red ? "text-red-600" : "text-slate-950"}`}>
+        <span className={`card-corner-rank ${small ? "text-[10px]" : "text-xs"}`}>{label}</span>
+        <span className={`card-corner-suit ${small ? "text-[10px]" : "text-sm"}`}>{displaySuit}</span>
       </span>
-      <span className={`absolute right-1.5 bottom-1 flex rotate-180 flex-col items-center leading-none ${red ? "text-red-600" : "text-slate-950"}`}>
-        <span className={small ? "text-[10px]" : "text-xs"}>{label}</span>
-        <span className={small ? "text-[10px]" : "text-sm"}>{displaySuit}</span>
+      <span className={`card-corner card-corner-bottom absolute right-1.5 bottom-1 flex rotate-180 flex-col items-center leading-none ${red ? "text-red-600" : "text-slate-950"}`}>
+        <span className={`card-corner-rank ${small ? "text-[10px]" : "text-xs"}`}>{label}</span>
+        <span className={`card-corner-suit ${small ? "text-[10px]" : "text-sm"}`}>{displaySuit}</span>
       </span>
-      <span className={`grid h-full place-items-center ${red ? "text-red-600" : "text-slate-950"}`}>
+      <span className={`card-center grid h-full place-items-center ${red ? "text-red-600" : "text-slate-950"}`}>
         <span className="flex flex-col items-center leading-none">
-          <span className={small ? "text-lg" : "text-3xl sm:text-4xl"}>{displaySuit}</span>
-          <span className={small ? "mt-0.5 text-sm" : "mt-1 text-xl sm:text-2xl"}>{label}</span>
+          <span className={`card-center-suit ${small ? "text-lg" : "text-3xl sm:text-4xl"}`}>{displaySuit}</span>
+          <span className={`card-center-rank ${small ? "mt-0.5 text-sm" : "mt-1 text-xl sm:text-2xl"}`}>{label}</span>
         </span>
       </span>
     </motion.button>

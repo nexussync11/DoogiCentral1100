@@ -116,18 +116,49 @@ body {
   .hand-fan .playing-card {
     width: 100% !important;
     min-width: 2.25rem;
-    height: 3.85rem !important;
+    height: 4.15rem !important;
     border-radius: 0.52rem;
     font-size: 0.86rem !important;
   }
 
-  .hand-fan .playing-card span {
-    line-height: 1;
+  .hand-fan .playing-card::after {
+    inset: 3px;
+    border-radius: 0.38rem;
   }
 
-  .hand-fan .playing-card > span:first-child,
-  .hand-fan .playing-card > span:nth-child(2) {
-    font-size: 0.62rem;
+  .hand-fan .card-corner {
+    left: 0.22rem;
+    top: 0.18rem;
+    font-weight: 900;
+    line-height: 0.9;
+  }
+
+  .hand-fan .card-corner-bottom {
+    left: auto;
+    right: 0.22rem;
+    top: auto;
+    bottom: 0.18rem;
+  }
+
+  .hand-fan .card-corner-rank {
+    font-size: 0.68rem !important;
+  }
+
+  .hand-fan .card-corner-suit {
+    font-size: 0.72rem !important;
+  }
+
+  .hand-fan .card-center-suit {
+    font-size: 1.18rem !important;
+  }
+
+  .hand-fan .card-center-rank {
+    margin-top: 0.08rem !important;
+    font-size: 0.92rem !important;
+  }
+
+  .hand-fan .card-center {
+    padding-top: 0.1rem;
   }
 
   .udita-dock {
@@ -143,6 +174,22 @@ body {
 
   .hand-fan .playing-card {
     min-width: 2rem;
-    height: 3.45rem !important;
+    height: 3.78rem !important;
+  }
+
+  .hand-fan .card-corner-rank {
+    font-size: 0.6rem !important;
+  }
+
+  .hand-fan .card-corner-suit {
+    font-size: 0.64rem !important;
+  }
+
+  .hand-fan .card-center-suit {
+    font-size: 1rem !important;
+  }
+
+  .hand-fan .card-center-rank {
+    font-size: 0.78rem !important;
   }
 }
