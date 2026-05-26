@@ -71,6 +71,22 @@ body {
   transform: translateZ(0);
 }
 
+.mobile-side-bubble {
+  position: fixed;
+  top: 52%;
+  z-index: 45;
+  display: grid;
+  width: 3.15rem;
+  height: 3.15rem;
+  place-items: center;
+  border: 1px solid rgba(103, 232, 249, 0.45);
+  border-radius: 999px;
+  background: rgba(2, 11, 24, 0.82);
+  color: #cffafe;
+  box-shadow: 0 16px 35px rgba(0, 0, 0, 0.42), inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(12px);
+}
+
 .hand-fan {
   min-height: 10.25rem;
   overflow: visible;
@@ -84,36 +100,49 @@ body {
 
 @media (max-width: 520px) {
   .hand-fan {
-    min-height: 8.7rem;
-    padding-inline: 0.25rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(2.25rem, 1fr));
+    gap: 0.35rem;
+    min-height: auto;
+    overflow: visible;
+    padding-inline: 0;
+  }
+
+  .hand-card {
+    position: static !important;
+    transform: none !important;
   }
 
   .hand-fan .playing-card {
-    width: 3.45rem !important;
-    height: 5.15rem !important;
-    font-size: 1rem !important;
+    width: 100% !important;
+    min-width: 2.25rem;
+    height: 3.85rem !important;
+    border-radius: 0.52rem;
+    font-size: 0.86rem !important;
   }
 
-  .playing-card {
-    border-radius: 0.62rem;
+  .hand-fan .playing-card span {
+    line-height: 1;
+  }
+
+  .hand-fan .playing-card > span:first-child,
+  .hand-fan .playing-card > span:nth-child(2) {
+    font-size: 0.62rem;
+  }
+
+  .udita-dock {
+    display: none;
   }
 }
 
 @media (max-width: 380px) {
   .hand-fan {
-    min-height: 8rem;
+    grid-template-columns: repeat(auto-fit, minmax(2rem, 1fr));
+    gap: 0.28rem;
   }
 
   .hand-fan .playing-card {
-    width: 3.05rem !important;
-    height: 4.65rem !important;
-  }
-
-  .udita-dock {
-    width: 4.25rem;
-  }
-
-  .udita-dock img {
-    height: 5.2rem;
+    min-width: 2rem;
+    height: 3.45rem !important;
   }
 }

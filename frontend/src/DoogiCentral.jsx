@@ -535,11 +535,42 @@ function Chat({ messages = [], send }) {
   );
 }
 
+function MoveHistory({ history = [] }) {
+  return (
+    <div className="rounded-3xl border border-white/10 bg-black/30 p-4">
+      <h2 className="font-black text-white">Move History</h2>
+      <div className="mt-4 max-h-56 space-y-2 overflow-auto">
+        {history.slice(-20).reverse().map((item) => <p key={item.id} className="rounded-xl bg-white/5 p-2 text-sm text-gray-300">{item.text}</p>)}
+      </div>
+    </div>
+  );
+}
+
+function MobilePanel({ activePanel, onClose, snapshot, send }) {
+  if (!activePanel) return null;
+  return (
+    <div className="fixed inset-0 z-50 bg-black/55 p-3 backdrop-blur-sm lg:hidden">
+      <motion.div
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 24 }}
+        className="absolute bottom-3 left-3 right-3 max-h-[78vh] overflow-auto rounded-[1.5rem] border border-cyan-300/20 bg-[#06111f] p-3 shadow-2xl"
+      >
+        <div className="mb-3 flex justify-end">
+          <button type="button" onClick={onClose} className="rounded-full border border-white/15 p-2 text-white"><X size={18} /></button>
+        </div>
+        {activePanel === "chat" ? <Chat messages={snapshot.chat} send={send} /> : <MoveHistory history={snapshot.history || []} />}
+      </motion.div>
+    </div>
+  );
+}
+
 function Game({ snapshot, send, analysis, onTutorial }) {
   const [selected, setSelected] = useState([]);
   const [dropReady, setDropReady] = useState(false);
   const [showDealAnimation, setShowDealAnimation] = useState(() => snapshot.status === "playing");
   const [celebratedFirstRank, setCelebratedFirstRank] = useState("");
+  const [activePanel, setActivePanel] = useState("");
   const tableRef = useRef(null);
   const hand = snapshot.hand || [];
   const selectedCards = hand.filter((card) => selected.includes(cardKey(card)));
@@ -599,7 +630,24 @@ function Game({ snapshot, send, analysis, onTutorial }) {
             onDone={() => setCelebratedFirstRank(firstRankPlayer.id)}
           />
         )}
+        <MobilePanel activePanel={activePanel} onClose={() => setActivePanel("")} snapshot={snapshot} send={send} />
       </AnimatePresence>
+      <button
+        type="button"
+        onClick={() => setActivePanel("history")}
+        className="mobile-side-bubble left-3 lg:hidden"
+        aria-label="Open move history"
+      >
+        <BookOpen size={20} />
+      </button>
+      <button
+        type="button"
+        onClick={() => setActivePanel("chat")}
+        className="mobile-side-bubble right-3 lg:hidden"
+        aria-label="Open live chat"
+      >
+        <MessageCircle size={20} />
+      </button>
       <section className="space-y-4">
         <div className="rounded-3xl border border-cyan-300/20 bg-white/[0.04] p-3 sm:p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -729,14 +777,9 @@ function Game({ snapshot, send, analysis, onTutorial }) {
           </div>
         </div>
       </section>
-      <section className="space-y-4">
+      <section className="hidden space-y-4 lg:block">
         <Chat messages={snapshot.chat} send={send} />
-        <div className="rounded-3xl border border-white/10 bg-black/30 p-4">
-          <h2 className="font-black text-white">Move History</h2>
-          <div className="mt-4 max-h-56 space-y-2 overflow-auto">
-            {(snapshot.history || []).slice(-20).reverse().map((item) => <p key={item.id} className="rounded-xl bg-white/5 p-2 text-sm text-gray-300">{item.text}</p>)}
-          </div>
-        </div>
+        <MoveHistory history={snapshot.history || []} />
         {snapshot.status === "finished" && (
           <div className="rounded-3xl border border-cyan-300/20 bg-cyan-400/10 p-4">
             <h2 className="flex items-center gap-2 font-black text-white"><Sparkles size={18} /> AI Analysis</h2>
