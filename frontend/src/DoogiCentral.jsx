@@ -18,7 +18,7 @@ import {
   X,
 } from "lucide-react";
 import nexusLogo from "./assets/NexusSyncLogo.png";
-import uditaImage from "./assets/Udita.webp";
+import apurvaImage from "./assets/Apurva.webp";
 
 const WS_URL =
   import.meta.env.VITE_DOOGI_WS_URL ||
@@ -204,12 +204,12 @@ const Card = memo(function Card({ card, selected, playable, onClick, onDragStart
   );
 });
 
-function UditaDock() {
+function ApurvaDock() {
   return (
-    <aside className="udita-dock fixed right-2 top-24 z-30 w-20 overflow-hidden rounded-2xl border border-amber-200/30 bg-black/70 shadow-2xl shadow-black/40 backdrop-blur md:right-4 md:top-auto md:bottom-4 md:w-28 md:rounded-3xl">
-      <img src={uditaImage} alt="Udita game guide" className="h-24 w-full object-cover object-left-top md:h-32" />
+    <aside className="apurva-dock fixed right-2 top-24 z-30 w-20 overflow-hidden rounded-2xl border border-cyan-200/30 bg-black/70 shadow-2xl shadow-black/40 backdrop-blur md:right-4 md:top-auto md:bottom-4 md:w-28 md:rounded-3xl">
+      <img src={apurvaImage} alt="Apurva game guide" className="h-24 w-full object-cover object-left-top md:h-32" />
       <div className="border-t border-amber-200/20 p-2 text-center">
-        <p className="text-[10px] font-black uppercase tracking-[0.12em] text-amber-200 md:text-xs md:tracking-[0.16em]">Udita</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.12em] text-cyan-100 md:text-xs md:tracking-[0.16em]">Apurva</p>
         <p className="mt-1 hidden text-[11px] font-semibold leading-4 text-amber-50 md:block">Game guide</p>
       </div>
     </aside>
@@ -252,7 +252,7 @@ function DealAnimation({ players = [], onDone }) {
         );
       })}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 rounded-full border border-amber-200/30 bg-black/70 px-5 py-3 text-sm font-black text-amber-100">
-        Udita is dealing the cards...
+        Apurva is dealing the cards...
       </div>
     </div>
   );
@@ -282,11 +282,11 @@ function FirstPlaceCelebration({ playerName, onDone }) {
         className="winner-celebration-card absolute left-1/2 w-[min(92vw,520px)] -translate-x-1/2 overflow-hidden rounded-[2rem] border border-amber-200/40 bg-black/85 p-4 shadow-2xl shadow-amber-950/40 backdrop-blur"
       >
         <div className="flex items-center gap-4">
-          <img src={uditaImage} alt="Udita celebrating" className="h-28 w-20 rounded-2xl object-cover object-left-top" />
+          <img src={apurvaImage} alt="Apurva celebrating" className="h-28 w-20 rounded-2xl object-cover object-left-top" />
           <div>
             <p className="text-xs font-black uppercase tracking-[0.26em] text-amber-200">Rank #1</p>
             <h2 className="mt-1 text-2xl font-black text-white">{playerName || "Winner"} wins first!</h2>
-            <p className="mt-2 text-sm font-semibold text-amber-50">Udita sends kisses, hearts, and a champion salute.</p>
+            <p className="mt-2 text-sm font-semibold text-amber-50">Apurva sends kisses, hearts, and a champion salute.</p>
           </div>
         </div>
       </motion.div>
@@ -366,9 +366,9 @@ function Landing({ connected, onMode }) {
         <h1 className="mt-6 text-5xl font-black leading-tight text-white sm:text-7xl">
           Doogi <span className="text-amber-200">Central</span>
         </h1>
-        <p className="mt-3 text-xl font-semibold text-amber-100">Meet Udita, your game guide.</p>
+        <p className="mt-3 text-xl font-semibold text-cyan-100">Meet Apurva, your game guide.</p>
         <p className="mt-5 max-w-2xl text-lg leading-8 text-gray-300">
-          Create private rooms, play singles, pairs, and triplets in realtime, chat live, and let Udita guide the table from first deal to final strategy breakdown.
+          Create private rooms, play singles, pairs, and triplets in realtime, chat live, and let Apurva guide the table from first deal to final strategy breakdown.
         </p>
         <div className="mt-6 grid max-w-2xl gap-3 sm:grid-cols-3">
           {[
@@ -393,14 +393,14 @@ function Landing({ connected, onMode }) {
           {connected ? "Realtime server connected." : "Realtime server not connected. Start the Doogi WebSocket server for online rooms."}
         </p>
       </div>
-      <div className="udita-panel rounded-[2rem] border border-amber-200/30 bg-white/[0.04] p-4 shadow-2xl shadow-amber-950/20">
+      <div className="apurva-panel rounded-[2rem] border border-cyan-200/30 bg-white/[0.04] p-4 shadow-2xl shadow-cyan-950/20">
         <div className="grid gap-4 lg:grid-cols-[1fr_.72fr]">
           <div className="relative min-h-[420px] overflow-hidden rounded-[1.5rem] border border-amber-200/20 bg-black">
-            <img src={uditaImage} alt="Udita, Doogi Central game guide" className="absolute inset-0 h-full w-full object-cover object-left-top" loading="eager" />
+            <img src={apurvaImage} alt="Apurva, Doogi Central game guide" className="absolute inset-0 h-full w-full object-cover object-left-top" loading="eager" />
             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-5">
               <p className="text-xs font-bold uppercase tracking-[0.28em] text-amber-200">Meet</p>
-              <h2 className="text-4xl font-black text-amber-100">Udita</h2>
+              <h2 className="text-4xl font-black text-cyan-100">Apurva</h2>
               <p className="mt-1 text-sm font-semibold text-amber-50">Your game guide</p>
             </div>
           </div>
@@ -810,7 +810,7 @@ export default function DoogiCentral() {
 
   return (
     <div className="min-h-screen bg-[#020711] text-white">
-      <UditaDock />
+      <ApurvaDock />
       <header className="sticky top-0 z-40 border-b border-white/10 bg-[#020711]/90 px-4 py-3 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
           <div className="flex items-center gap-3">

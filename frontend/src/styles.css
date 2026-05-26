@@ -60,14 +60,14 @@ body {
   border-radius: 0.45rem;
 }
 
-.udita-panel {
+.apurva-panel {
   background:
-    radial-gradient(circle at 24% 18%, rgba(251, 191, 36, 0.16), transparent 30%),
-    radial-gradient(circle at 80% 20%, rgba(20, 184, 166, 0.12), transparent 28%),
+    radial-gradient(circle at 24% 18%, rgba(20, 184, 166, 0.16), transparent 30%),
+    radial-gradient(circle at 80% 20%, rgba(34, 211, 238, 0.14), transparent 28%),
     rgba(255, 255, 255, 0.04);
 }
 
-.udita-dock {
+.apurva-dock {
   transform: translateZ(0);
 }
 
@@ -200,7 +200,7 @@ body {
     padding-top: 0.1rem;
   }
 
-  .udita-dock {
+  .apurva-dock {
     display: none;
   }
 }
