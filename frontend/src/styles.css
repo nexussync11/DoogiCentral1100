@@ -98,7 +98,35 @@ body {
   transition: transform 160ms ease, z-index 160ms ease;
 }
 
+.winner-celebration-card {
+  bottom: 1.5rem;
+}
+
 @media (max-width: 520px) {
+  .winner-celebration-card {
+    top: 50%;
+    bottom: auto;
+    transform: translate(-50%, -50%) !important;
+    width: min(90vw, 22rem);
+    border-radius: 1.25rem;
+    padding: 0.75rem;
+  }
+
+  .winner-celebration-card img {
+    width: 4.5rem;
+    height: 6rem;
+  }
+
+  .winner-celebration-card h2 {
+    font-size: 1.05rem;
+    line-height: 1.25rem;
+  }
+
+  .winner-celebration-card p {
+    font-size: 0.76rem;
+    line-height: 1.15rem;
+  }
+
   .hand-fan {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(2.25rem, 1fr));
@@ -106,6 +134,12 @@ body {
     min-height: auto;
     overflow: visible;
     padding-inline: 0;
+  }
+
+  .hand-fan-small {
+    display: flex;
+    justify-content: center;
+    gap: 0.65rem;
   }
 
   .hand-card {
@@ -119,6 +153,11 @@ body {
     height: 4.15rem !important;
     border-radius: 0.52rem;
     font-size: 0.86rem !important;
+  }
+
+  .hand-fan-small .playing-card {
+    width: 3.45rem !important;
+    max-width: 3.45rem;
   }
 
   .hand-fan .playing-card::after {
@@ -172,9 +211,18 @@ body {
     gap: 0.28rem;
   }
 
+  .hand-fan-small {
+    gap: 0.55rem;
+  }
+
   .hand-fan .playing-card {
     min-width: 2rem;
     height: 3.78rem !important;
+  }
+
+  .hand-fan-small .playing-card {
+    width: 3.05rem !important;
+    max-width: 3.05rem;
   }
 
   .hand-fan .card-corner-rank {

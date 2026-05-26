@@ -279,7 +279,7 @@ function FirstPlaceCelebration({ playerName, onDone }) {
         initial={{ opacity: 0, y: 40, scale: 0.9 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 24, scale: 0.95 }}
-        className="absolute bottom-6 left-1/2 w-[min(92vw,520px)] -translate-x-1/2 overflow-hidden rounded-[2rem] border border-amber-200/40 bg-black/85 p-4 shadow-2xl shadow-amber-950/40 backdrop-blur"
+        className="winner-celebration-card absolute left-1/2 w-[min(92vw,520px)] -translate-x-1/2 overflow-hidden rounded-[2rem] border border-amber-200/40 bg-black/85 p-4 shadow-2xl shadow-amber-950/40 backdrop-blur"
       >
         <div className="flex items-center gap-4">
           <img src={uditaImage} alt="Udita celebrating" className="h-28 w-20 rounded-2xl object-cover object-left-top" />
@@ -748,7 +748,7 @@ function Game({ snapshot, send, analysis, onTutorial }) {
               </button>
             </div>
           )}
-          <div className="hand-fan relative mt-4 pb-6 pt-5">
+          <div className={`hand-fan relative mt-4 pb-6 pt-5 ${hand.length <= 4 ? "hand-fan-small" : ""}`}>
             {hand.map((card, index) => (
               <div
                 key={cardKey(card)}
